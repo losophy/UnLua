@@ -44,6 +44,7 @@ function M:FireAmmunition()
 	end
 end
 
+--消耗弹药
 function M:ConsumeAmmo()
 	if not self.InfiniteAmmo then
 		local Ammo = self.CurrentAmmo - self.AmmoPerShot
@@ -84,20 +85,36 @@ end
 
 function M:GetFireInfo()
 	local UBPI_Interfaces = UE.UClass.Load("/Game/Core/Blueprints/BPI_Interfaces.BPI_Interfaces_C")
+
+	-- 从接口获取武器发射起点和方向（需要确保Instigator已实现该接口）
 	local TraceStart, TraceDirection = UBPI_Interfaces.GetWeaponTraceInfo(self.Instigator)
+
+	-- 计算追踪终点（根据武器射程）
 	local Delta = TraceDirection * self.WeaponTraceDistance
 	local TraceEnd = TraceStart + Delta
+
+	-- 初始化命中结果容器
 	local HitResult = UE.FHitResult()
 	--local ActorsToIgnore = TArray(AActor)
+
+	-- 执行射线检测（参数说明：上下文对象，起点，终点，追踪通道，忽略复杂碰撞，忽略的Actor数组，调试绘制模式，输出命中结果，是否忽略自身）
 	local bResult = UE.UKismetSystemLibrary.LineTraceSingle(self, TraceStart, TraceEnd, UE.ETraceTypeQuery.Weapon, false, nil, UE.EDrawDebugTrace.None, HitResult, true)
+
+	-- 获取枪口插槽的世界位置
 	local Translation = self.SkeletalMesh:GetSocketLocation(self.MuzzleSocketName)
+
+	-- 计算旋转方向
 	local Rotation
 	if bResult then
+		-- 如果命中目标：朝向命中点
 		local ImpactPoint = HitResult.ImpactPoint
 		Rotation = UE.UKismetMathLibrary.FindLookAtRotation(Translation, ImpactPoint)
 	else
+		-- 如果未命中：朝向追踪终点
 		Rotation = UE.UKismetMathLibrary.FindLookAtRotation(Translation, TraceEnd)
 	end
+
+	-- 组合为变换信息（可用于生成弹道/特效）
 	local Transform = UE.FTransform(Rotation:ToQuat(), Translation)
 	return Transform
 end

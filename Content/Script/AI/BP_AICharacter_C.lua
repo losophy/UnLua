@@ -17,11 +17,19 @@ end
 
 function M:Died_Multicast_RPC(DamageType)
 	self.Super.Died_Multicast_RPC(self, DamageType)
+
+	-- 禁用球体碰撞,防止后续交互
 	self.Sphere:SetCollisionEnabled(UE.ECollisionEnabled.NoCollision)
+
+	-- 将网格体移动到角色胶囊体半高处（模拟死亡后下沉效果）
 	local NewLocation = UE.FVector(0.0, 0.0, self.CapsuleComponent.CapsuleHalfHeight)
 	local SweepHitResult = UE.FHitResult()
 	self.Mesh:K2_SetRelativeLocation(NewLocation, false, SweepHitResult, false)
+
+	-- 启用指定骨骼以下的物理模拟（ ragdoll 效果）
 	self.Mesh:SetAllBodiesBelowSimulatePhysics(self.BoneName, true, true)
+
+	-- 通知游戏模式敌人死亡
 	local GameMode = UE.UGameplayStatics.GetGameMode(self)
 	if GameMode then
 		local BPI_Interfaces = UE.UClass.Load("/Game/Core/Blueprints/BPI_Interfaces.BPI_Interfaces_C")

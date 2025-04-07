@@ -1,5 +1,5 @@
 --[[
-    说明：
+    说明：读取C++中的结构体
 
     本示例C++源码：
     \Source\TPSProject\TutorialObject.cpp
